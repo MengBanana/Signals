@@ -4,9 +4,13 @@ The program will firstly display its owne process ID, and then prompts the user 
 the other process.
 
 The SIGTSTP handler pauses the program
+
 The SIGCONT handler redisplays the choices
+
 The SIGTERM handler terminates the program< with exit status EXIT_SUCCESS./li>
+
 The SIGUSR1 handler prints the curent process ID
+
 The SIGUSR2 handler prints the other process ID
 
 Within a loop, It then presents a list of signals that it can send to the other process, including:
