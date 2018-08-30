@@ -18,3 +18,4 @@ The program offers "0 = quit" to quit the program with return value of EXIT_SUCC
 The program always sends the selected signal to the other process to handle. If the program receives an error return status (-1) 
 from the kill() function, it should print "Process %d no longer available\n" with the other process id and quit the program with 
 a return status of EXIT_FAILURE.
+
