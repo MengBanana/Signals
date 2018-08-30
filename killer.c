@@ -63,13 +63,6 @@ void SIGUSR2_handler(int sig) {
 	printf("Other process ID: %d\n", otherPID);
 }
 
-/** The helper function to handle if the program recieves an erro return
-* status -1 from the kill() function
-*/
-void error() {
-	printf("Process %d no longer available\n", otherPID);
-	kill(pid, SIGTERM);
-}
 
 /**
  * Display choices and waiting for input
