@@ -11,44 +11,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/** indicates process is running */
-bool stop = false;
-
 /** own process ID*/
 pid_t pid;
 
 /** process ID of another process */
 static pid_t otherPID;
 
-
-/** The SIGTSTP handler pauses the program*/
+/**
+ * Handle SIGTSTP as request to stop/suspend process. Similar to
+ * SIGSTOP, but enables application to intercept and handle the
+ * signal.  Typing CNTL-Z into a terminal sends SIGTSTP to the
+ * process associated with the keyboard.
+ */
 void SIGTSTP_handler(int sig) {
 	printf("Received SIGTSTP: suspending\n");
 	pause();
 }
 
-/** The SIGCONT handler redisplays the choices*/
+/**
+ * Handle SIGCONT as notification that the process is continuing.
+ * And re-display the choices.
+ */
 void SIGCONT_handler(int sig) {
-	printf("\t\tMenu\n");
-	printf("1 == SIGTSTP\n");
-	printf("2 == SIGCONT\n");
-	printf("3 == SIGTERM\n");
-	printf("4 == SIGUSR1\n");
-	printf("5 == SIGUSR2\n");
+	printf("Received SIGCONT: resuming\n");
+	display();
 }
 
-/** The SIGTERM handler terminates the program with exit status EXIT_SUCCESS*/
+/**
+ * Handle SIGTERM as request to terminate the process normally.
+ * Similar to SIGKILL but enables application to intercept and
+ * handle the signal.  This handler exit the process immediately.
+ */
 void SIGTERM_handler(int sig) {
-	stop = true;
 	printf("Received SIGTERM: terminating normally\n");
+	exit(EXIT_SUCCESS);
 }
 
-/** The SIGUSR1 handler prints the current process ID*/
+/**
+ * Handle SIGUSR1, an application specific signal. This handler
+ * prints the current process id.
+ */
 void SIGUSR1_handler(int sig) {
 	printf("Current process ID: %d\n", pid);
 }
 
-/** The SIGUSR1 handler prints the other process ID*/
+/**
+ * Handle SIGUSR2, an application specific signal. This handler
+ * prints the other process id.
+ */
 void SIGUSR2_handler(int sig) {
 	printf("Other process ID: %d\n", otherPID);
 }
@@ -61,6 +71,18 @@ void error() {
 	kill(pid, SIGTERM);
 }
 
+/**
+ * Display choices and waiting for input
+ */
+void display() {
+	printf("0: quit\n");
+	printf("1: SIGTSTP\n");
+	printf("2: SIGCONT\n");
+	printf("3: SIGTERM\n");
+	printf("4: SIGUSR1\n");
+	printf("5: SIGUSR2\n");
+	printf("Please enter your choice: ");
+}
 
 int main() {
    // Register signal and signal handler
@@ -76,55 +98,39 @@ int main() {
    printf("Please enter the pid of other program:\n");
    // input other process id
    scanf("%d", &otherPID);
-   // first display menu
-   if (kill(otherPID, SIGCONT) == -1) {
-   	    error();
-		return EXIT_FAILURE;
-	}
-
-   int choice;
-   while(! stop) {
+   int status = 0;
+   while(status == 0) {
+	   // show choices
+	   display();
+	   int choice;
 	   // keep asking for choice
 	   printf("Please enter your choice:\n");
 	   scanf("%d", &choice);
-	   if (choice == 0) {
-		   break;
+	   switch (choice) {
+		   case 0:
+			   printf("Program exiting\n");
+			   return EXIT_SUCCESS;
+		   case 1:
+			   status = kill(otherPID, SIGTSTP);
+			   break;
+		   case 2:
+			   status = kill(otherPID, SIGCONT);
+			   break;
+		   case 3:
+			   status = kill(otherPID, SIGTERM);
+			   break;
+		   case 4:
+			   status = kill(otherPID, SIGUSR1);
+			   break;
+		   case 5:
+			   status = kill(otherPID, SIGUSR2);
+			   break;
+		   default:
+			   printf("Please try again.\n");
 	   }
-	   else if (choice == 1) {
-		   if (kill(otherPID, SIGTSTP) == -1) {
-			   error();
-			   return EXIT_FAILURE;
-		   }
-	   }
-	   else if (choice == 2) {
-    	  if (kill(otherPID, SIGCONT) == -1) {
-    	  	   error();
-    	  	   return EXIT_FAILURE;
-    	  }
-	   }
-	   else if (choice == 3) {
-		   if (kill(otherPID, SIGTERM) == -1) {
-			   error();
-			   return EXIT_FAILURE;
-		   }
-	   }
-	   else if (choice == 4) {
-		   if (kill(otherPID, SIGUSR1) == -1) {
-			   error();
-			   return EXIT_FAILURE;
-		   }
-	   }
-	   else if (choice == 5) {
-		   if (kill(otherPID, SIGUSR2) == -1) {
-			   error();
-			   return EXIT_FAILURE;
-		   }
-	   }
-	   else {
-		   printf("Invalid choice\n");
-		}
    }
-   return EXIT_SUCCESS;
+	printf("Error, process %d no longer exist\n", otherPID);
+	return EXIT_FAILURE;
 }
 
 
